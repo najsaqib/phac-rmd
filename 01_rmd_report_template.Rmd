@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
 library(tidyverse) # Comes with most helpful libraries such as dplyr, readr, etc.
 library(sf) # package to read in geojson file and do simple features mapping
 library(DT) # package to create tables by using function kable
-library(sjPlot) # package to display basic model output in an HTML table
+library(sjPlot) # package to display basic model output in a clean HTML table
 
 # Load population and unemployment data for provinces
 province_data <- read_csv("data/prov_data.csv")
@@ -97,6 +97,8 @@ ggplot(province_data, aes(x = reorder(province, pop),
 
 Sed eleifend tortor eu diam dignissim, ac porta elit iaculis. Curabitur bibendum arcu ac diam faucibus commodo quis eu nibh. Praesent eget nisi a sapien vestibulum convallis. Nunc commodo efficitur metus ut dictum. Fusce iaculis placerat sodales. Mauris id augue ac felis venenatis mollis. Nunc ut efficitur libero. Cras sed diam et turpis volutpat volutpat.
 
+Phasellus ut nibh lectus. Praesent eu odio vitae metus gravida convallis. Sed porttitor est sit amet magna mollis, nec accumsan libero tempor. Aliquam odio risus, lobortis ut porttitor sit amet, laoreet sit amet orci. Phasellus velit orci, lobortis dignissim mollis vitae, viverra ac metus. Nullam dui mi, rhoncus vel tincidunt id, venenatis in erat. Curabitur a sodales ex, in pulvinar lacus. Mauris maximus sodales nunc
+
 ```{r, echo = FALSE}
 #Fit the simple linear regression using lm
 
@@ -117,7 +119,6 @@ ggplot(province_data, aes(x = pop, y = unemp)) +
   )
 
 tab_model(unemp_pop, p.style = "a") # display the regression output
-
 ```
 
 ***

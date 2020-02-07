@@ -1,0 +1,131 @@
+---
+title: "Provincial Report 2019"
+output: html_document
+params:
+  province: "Alberta"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
+
+library(tidyverse) # Comes with most helpful libraries such as dplyr, readr, etc.
+library(sf) # package to read in geojson file and do simple features mapping
+library(DT) # package to create tables by using function kable
+library(sjPlot) # package to display basic model output in an HTML table
+
+# Load population and unemployment data for provinces
+province_data <- read_csv("data/prov_data.csv")
+
+# Extract province specific information
+province_name <- province_data %>% filter(province == params$province) %>% select(province) %>% pull()
+province_unemp <- province_data %>% filter(province == params$province) %>% select(unemp) %>% pull()
+province_pop <- province_data %>% filter(province == params$province) %>% select(pop) %>% pull()
+units <- province_data %>% filter(province == params$province) %>% select(units) %>% pull()
+
+# Read in the Canada provinces/territories mapping data in the geojson format and alter the projection to match Statistics Canada's prefered Lambert conformal conic projection along with standard parallels at 49° N and 77° N and central meridian at 91° 52' W
+
+province_territory <- st_read("data/canada_pt_sim.geojson", quiet = TRUE)
+province_territory <- st_transform(province_territory, 
+                          crs = "+proj=lcc +lat_1=49 +lat_2=77 +lon_0=-91.52 +x_0=0 +y_0=0 +datum=NAD83 
+                          +units=m +no_defs") %>%
+  rename(province = PRENAME) %>%
+  left_join(province_data, by = "province")
+```
+***
+### Overview of `r province_name`
+
+This report is for the province of `r province_name`. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin et mauris ac libero fermentum fermentum et id libero. Integer euismod neque sed mi semper, sed volutpat quam convallis. Vestibulum congue elementum ipsum interdum lobortis. Etiam ante libero, tincidunt at leo non, elementum iaculis diam. Donec semper dolor libero, et aliquet enim elementum sit amet.
+
+Sed hendrerit velit a quam tincidunt cursus. Pellentesque quis eros vitae nisi sodales accumsan quis eget sapien. Proin varius dui eu lectus tincidunt, et suscipit purus porttitor. Sed egestas mauris nunc, id facilisis risus dapibus sed. Nulla sit amet sodales nibh. Cras vehicula dui ut leo dignissim vulputate. 
+
+```{r, echo = FALSE}
+ggplot(data = province_territory) + 
+  geom_sf(aes(fill = unemp)) + 
+  labs(title = paste0("Figure 1: ", province_name, " had an unemployment rate of ", province_unemp, "% in 2019"),
+       subtitle = paste0("Average unemployment rate in the country was ", mean(province_data$unemp), "%")
+       ) +
+  scale_fill_gradient(low = "#fff2f5", high = "#ed0726") +
+  theme(panel.grid = element_blank(),
+      axis.title = element_blank(),
+      axis.text.x = element_blank(),
+      axis.text.y = element_blank(),
+      axis.ticks = element_blank(),
+      axis.line = element_blank(),
+      legend.position = "none",
+      panel.background = element_blank(),
+      panel.grid.major = element_line(colour = 'transparent')
+      )
+
+```
+
+***
+### In 2019, `r province_name` had a population of `r province_pop` `r units` people
+
+Aenean auctor augue et iaculis posuere. Mauris dapibus accumsan euismod. Cras condimentum sapien quis metus fringilla, ac interdum felis vehicula. Suspendisse accumsan sapien non nulla elementum consectetur vitae rutrum turpis. Cras a viverra lectus. Nullam et fermentum erat. Nullam tristique, nunc ut congue faucibus, velit massa lacinia sapien, eu hendrerit ante justo eget mauris. Sed non posuere massa. Nullam a maximus nunc.
+
+Mauris euismod erat sed massa porttitor tempor. Praesent elementum odio sit amet tortor vehicula, a laoreet justo scelerisque. In ligula lorem, blandit vitae magna eu, finibus lobortis lacus. Etiam sed porta metus. Proin in eros ac leo pulvinar venenatis viverra et odio. Etiam dictum massa ut mauris viverra, non scelerisque nisl bibendum. Nullam ullamcorper viverra justo. 
+
+```{r, echo = FALSE}
+ggplot(province_data, aes(x = reorder(province, pop), 
+                           y = pop,
+                           fill = factor(ifelse(province == params$province, "Highlighted", "Normal")))) +
+  labs(title = "Figure 2: Population Across the Provinces") +
+  geom_bar(stat = "identity") +
+  geom_hline(yintercept = median(province_data$pop), linetype = 2) +
+  geom_text(aes(5,median(province_data$pop),
+                label = paste0("Median provincial population = ", median(province_data$pop), " million"),
+                fontface = "italic",
+                hjust = -0.05,
+                vjust = 10
+                )) +
+  coord_flip() +
+  theme(
+  axis.title.y = element_blank(),
+  panel.border = element_blank(),
+  panel.grid=element_blank(),
+  panel.background = element_blank(),
+  axis.ticks.y = element_blank(),
+  axis.line.y = element_blank(),
+  legend.position = "none",
+  plot.margin = unit(c(1, 0,0,0),"cm")
+  )
+
+```
+
+***
+### Model - Relationship between unemployment rate and population
+
+Sed eleifend tortor eu diam dignissim, ac porta elit iaculis. Curabitur bibendum arcu ac diam faucibus commodo quis eu nibh. Praesent eget nisi a sapien vestibulum convallis. Nunc commodo efficitur metus ut dictum. Fusce iaculis placerat sodales. Mauris id augue ac felis venenatis mollis. Nunc ut efficitur libero. Cras sed diam et turpis volutpat volutpat.
+
+```{r, echo = FALSE}
+#Fit the simple linear regression using lm
+
+unemp_pop <- lm(unemp ~ pop, data = province_data) # simple linear model using function lm
+
+ggplot(province_data, aes(x = pop, y = unemp)) +
+  labs(title = "Figure 3: Unemployment ~ Population : Simple Linear Model") +
+  geom_point() +
+  geom_smooth(method = "lm") +  
+  theme(
+  panel.border = element_blank(),
+  panel.grid=element_blank(),
+  panel.background = element_blank(),
+  axis.ticks.y = element_blank(),
+  axis.line.y = element_blank(),
+  legend.position = "none",
+  plot.margin = unit(c(1, 0,0,0),"cm")
+  )
+
+tab_model(unemp_pop, p.style = "a") # display the regression output
+
+```
+
+***
+### Annex - Data Table
+
+Mauris mattis, ligula id convallis consequat, leo augue fringilla lectus, quis suscipit tellus sapien eu nibh. Sed massa enim, congue nec leo non, viverra vehicula sapien. Sed vestibulum varius risus, ac aliquet lectus tincidunt vitae. Sed efficitur tellus nisl, eget convallis turpis condimentum dignissim.
+
+```{r, echo = FALSE}
+datatable(province_data) # Using the DT package that provides filtering and sorting options
+
+```
